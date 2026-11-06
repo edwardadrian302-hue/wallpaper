@@ -27,7 +27,7 @@ const queries = [
   ['蔚蓝假日', '海岸', 'Mediterranean turquoise coast landscape -painting'],
   ['竹影清风', '森林', 'bamboo forest landscape path -painting'],
 ];
-const headers = { 'User-Agent': 'QingyeWallpaperPrototype/0.1 (local sample preparation; Wikimedia attribution preserved)' };
+const headers = { 'User-Agent': 'QingyeWallpaperAssetPreparation/0.1 (local sample preparation; Wikimedia attribution preserved)' };
 async function commonsRequest(url) {
   for (let attempt = 0; attempt < 3; attempt++) {
     const response = await fetch(url, { headers, signal: AbortSignal.timeout(45000) });

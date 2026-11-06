@@ -4,6 +4,8 @@ Windows 10/11 x64 桌面壁纸软件，暂定名「青野」。React 用于绘�
 
 ## 使用发行版
 
+从 [GitHub Releases](https://github.com/edwardadrian302-hue/wallpaper/releases/tag/v0.1.2) 下载：[Windows 安装版](https://github.com/edwardadrian302-hue/wallpaper/releases/download/v0.1.2/Qingye-0.1.2-x64-Setup.exe) · [完整便携版](https://github.com/edwardadrian302-hue/wallpaper/releases/download/v0.1.2/Qingye-0.1.2-x64-Portable.zip)。
+
 - `release/0.1.2/Qingye.exe`：便携版，双击启动。请放在可写的目录中，并保留同目录的 `WebView2Loader.dll`。
 - `release/0.1.2/Qingye-0.1.2-x64-Setup.exe`：中文安装程序，可选择安装目录并创建快捷方式。
 - `release/0.1.2/Qingye-0.1.2-x64-Portable.zip`：便携版完整压缩包，解压后运行 `Qingye.exe`。
@@ -53,4 +55,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/dev-desktop.ps1
 
 ## 发布状态
 
-此版本为开发预览版，未做代码签名。检查结果见 [0.1.1 验证记录](docs/VALIDATION-0.1.1.md)。安装升级、长期后台运行和多设备兼容性仍需继续验证。[其他来源调查](docs/IMAGE_SOURCES.md) 包含 NASA、Openverse 及开放馆藏的接入条件，尚未接入这些来源。
+此版本为开发预览版，未做代码签名。清理记录见 [0.1.2 验证记录](docs/VALIDATION-0.1.2.md)，下载与分页检查见 [0.1.1 验证记录](docs/VALIDATION-0.1.1.md)。安装升级、长期后台运行和多设备兼容性仍需继续验证。[其他来源调查](docs/IMAGE_SOURCES.md) 包含 NASA、Openverse 及开放馆藏的接入条件，尚未接入这些来源。
