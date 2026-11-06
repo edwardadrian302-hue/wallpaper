@@ -1,14 +1,7 @@
-param([switch]$DebugBuild, [switch]$NoBundle, [switch]$LocalTransport, [switch]$UpdateLock)
+param([switch]$DebugBuild, [switch]$NoBundle, [switch]$LocalTransport, [switch]$UpdateLock, [switch]$RunTests)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$env:RUSTUP_HOME = Join-Path $projectRoot '.tools\rustup'
-$env:CARGO_HOME = Join-Path $projectRoot '.tools\cargo'
-$env:RUSTUP_TOOLCHAIN = 'stable-x86_64-pc-windows-gnu'
-$env:PATH = "$(Join-Path $env:CARGO_HOME 'bin');D:\msys64\ucrt64\bin;$env:PATH"
-$env:CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER = 'D:\msys64\ucrt64\bin\gcc.exe'
-$env:CC = 'D:\msys64\ucrt64\bin\gcc.exe'
-$env:CXX = 'D:\msys64\ucrt64\bin\g++.exe'
-$env:CARGO_BUILD_JOBS = '4'
+. (Join-Path $PSScriptRoot 'toolchain-env.ps1')
 $env:CARGO_HTTP_MULTIPLEXING = 'false'
 $env:CARGO_HTTP_TIMEOUT = '60'
 $env:CARGO_HTTP_LOW_SPEED_LIMIT = '1'
@@ -46,6 +39,7 @@ registry = "sparse+http://127.0.0.1:19420/"
 $buildArgs = @('run', 'tauri', '--', 'build', '--target', 'x86_64-pc-windows-gnu')
 if ($DebugBuild) { $buildArgs += '--debug' }
 if ($NoBundle) { $buildArgs += '--no-bundle' }
+$buildArgs += @('--', '--locked')
 try {
     $fetchArgs = @('fetch', '--manifest-path', 'src-tauri/Cargo.toml', '--target', 'x86_64-pc-windows-gnu')
     if (-not $UpdateLock) { $fetchArgs += '--locked' }
@@ -55,6 +49,10 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Could not prepare WebView2 loader.' }
     & node.exe scripts/write-notices.mjs
     if ($LASTEXITCODE -ne 0) { throw 'Could not prepare license notices.' }
+    if ($RunTests) {
+        & cargo.exe test --manifest-path src-tauri/Cargo.toml --target $buildTools.rustTarget --release --locked
+        if ($LASTEXITCODE -ne 0) { throw 'Native tests failed.' }
+    }
     & npm.cmd @buildArgs
     if ($LASTEXITCODE -ne 0) { throw 'Desktop build failed.' }
 } finally {
