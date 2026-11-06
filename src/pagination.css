@@ -1,0 +1,22 @@
+.results-label strong { color: #617951; font-weight: 600; font-variant-numeric: tabular-nums; }
+.library-toolbar { scroll-margin-top: 24px; }
+.collection-pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; padding-top: 22px; border-top: 1px solid var(--border); }
+.pagination-summary { font-size: 11px; color: #94a086; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pagination-buttons { display: flex; align-items: center; gap: 7px; }
+.pagination-buttons button { min-width: 35px; height: 35px; padding: 0 10px; font-size: 11px; border: 1px solid #e0e7d8; border-radius: 8px; color: #7b8e6c; background: #fcfdf8; font-variant-numeric: tabular-nums; }
+.pagination-buttons button:hover:not(:disabled) { background: #eaf0e2; border-color: #cddbc1; }
+.pagination-buttons button.current-page { background: #5d7960; color: #fff; border-color: #5d7960; }
+.pagination-buttons button:disabled { opacity: .35; }
+.pagination-gap { font-size: 12px; padding: 0 3px; color: #9aa98a; }
+.download-panel { display: flex; align-items: center; gap: 16px; padding: 18px 21px; margin: 18px 0 24px; border: 1px solid #e0e8d7; border-radius: 11px; background: #eef3e8; }
+.download-panel-icon { width: 39px; height: 39px; display: grid; place-items: center; flex-shrink: 0; border-radius: 10px; color: #81996d; background: #e2ebd7; }
+.download-panel-info { flex: 1; min-width: 0; }
+.download-panel-title { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+.download-panel h3 { font-size: 12px; font-weight: 500; color: #607852; }
+.download-panel-title>span { font-size: 10px; color: #92a07f; white-space: nowrap; }
+.download-panel p { font-size: 10px; line-height: 1.8; color: #96a386; margin-top: 6px; overflow-wrap: anywhere; }
+.download-progress { height: 3px; border-radius: 4px; overflow: hidden; background: #dde6d2; margin-top: 10px; }
+.download-progress>span { display: block; height: 100%; background: #8ba775; transition: width .3s; border-radius: inherit; }
+@media(max-width:760px) { .download-panel { gap: 10px; padding: 14px; flex-wrap: wrap; } .download-panel-title { flex-wrap: wrap; gap: 6px; } .download-panel-icon { width: 33px; height: 33px; } .download-panel-info { flex-basis: 70%; } .download-panel>.button { margin-left: auto; } }
+@media(max-width: 760px) { .collection-pagination { gap: 12px; } .pagination-buttons { gap: 5px; } .pagination-buttons button { min-width: 31px; height: 33px; padding: 0 8px; font-size: 10px; } .pagination-buttons button>span { display: none; } }
+@media(max-width: 480px) { .collection-pagination { flex-direction: column; } .results-label { align-items: flex-start; gap: 12px; line-height: 1.8; } .results-label>span:last-child { text-align: right; } }
