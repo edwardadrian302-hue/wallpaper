@@ -1,9 +1,11 @@
 import { mkdir, readdir, copyFile, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { join, resolve } from 'node:path';
 import './write-notices.mjs';
 const { version } = JSON.parse(await readFile('package.json', 'utf8'));
-const dir = 'src-tauri/target/x86_64-pc-windows-gnu/release';
-const releaseDir = `release/${version}`;
+const targetRoot = process.env.CARGO_TARGET_DIR || (process.env.DEVTOOLS_ROOT ? join(process.env.DEVTOOLS_ROOT, 'build-cache', 'chaoxi-wallpaper') : 'src-tauri/target');
+const dir = join(resolve(targetRoot), 'x86_64-pc-windows-gnu', 'release');
+const releaseDir = process.env.CHAOXI_RELEASE_DIR || `release/${version}`;
 await mkdir(releaseDir, { recursive: true });
 for (const name of ['THIRD_PARTY_NOTICES.md', 'THIRD_PARTY_LICENSES.txt']) await copyFile(name, `${releaseDir}/${name}`);
 await copyFile(`${dir}/chaoxi-wallpaper.exe`, `${releaseDir}/Chaoxi.exe`);

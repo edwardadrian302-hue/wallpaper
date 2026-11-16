@@ -1,41 +1,50 @@
-# Dot-source this file. Changes apply only to the current PowerShell process.
+# Shared, user-installed tools. Dot-source to configure only this PowerShell process.
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $buildTools = Get-Content -LiteralPath (Join-Path $projectRoot 'build-tools.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$sharedRoot = $env:DEVTOOLS_ROOT
+if (-not $sharedRoot) { $sharedRoot = [Environment]::GetEnvironmentVariable('DEVTOOLS_ROOT', 'User') }
+if ($sharedRoot) {
+    if (-not $env:CARGO_TARGET_DIR) { $env:CARGO_TARGET_DIR = Join-Path $sharedRoot 'build-cache\chaoxi-wallpaper' }
+    $sharedNode = Join-Path $sharedRoot 'nodejs'
+    if (Test-Path -LiteralPath (Join-Path $sharedNode 'node.exe')) { $env:PATH = "$sharedNode;$env:PATH" }
+}
+foreach ($variable in @('RUSTUP_HOME', 'CARGO_HOME', 'npm_config_cache')) {
+    $value = [Environment]::GetEnvironmentVariable($variable, 'Process')
+    if (-not $value) { $value = [Environment]::GetEnvironmentVariable($variable, 'User') }
+    if ($value) { [Environment]::SetEnvironmentVariable($variable, $value, 'Process') }
+}
+$cargoHome = if ($env:CARGO_HOME) { $env:CARGO_HOME } else { Join-Path $env:USERPROFILE '.cargo' }
+$env:CARGO_HOME = $cargoHome
+$env:PATH = "$(Join-Path $cargoHome 'bin');$env:PATH"
+$compilerBin = $env:MSYS2_UCRT64_BIN
+if (-not $compilerBin) { $compilerBin = [Environment]::GetEnvironmentVariable('MSYS2_UCRT64_BIN', 'User') }
+if (-not $compilerBin) {
+    $gcc = Get-Command gcc.exe -ErrorAction SilentlyContinue
+    if ($gcc) { $compilerBin = Split-Path -Parent $gcc.Source }
+}
+if (-not $compilerBin) { throw 'Install MSYS2 UCRT64 GCC and set MSYS2_UCRT64_BIN, or put its bin directory on PATH.' }
+foreach ($file in @('gcc.exe', 'g++.exe', 'windres.exe')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $compilerBin $file))) { throw "Missing shared compiler: $file" }
+}
+if ((& (Join-Path $compilerBin 'gcc.exe') -dumpmachine).Trim() -ne 'x86_64-w64-mingw32') { throw 'An x64 MinGW compiler is required.' }
+$env:PATH = "$compilerBin;$env:PATH"
 $actualNode = (& node.exe -p 'process.versions.node').Trim()
-if ($LASTEXITCODE -ne 0 -or $actualNode -ne $buildTools.node) { throw "Install Node.js $($buildTools.node) first. Current: $actualNode" }
-$env:RUSTUP_HOME = Join-Path $projectRoot '.tools\rustup'
-$env:CARGO_HOME = Join-Path $projectRoot '.tools\cargo'
-$env:npm_config_cache = Join-Path $projectRoot '.tools\npm-cache'
-$compilerBin = Join-Path $projectRoot $buildTools.compiler.directory
-$npmShim = Join-Path $projectRoot '.tools\npm-shim'
-$npmCli = Join-Path $projectRoot '.tools\npm\node_modules\npm\bin\npm-cli.js'
-foreach ($requiredFile in @((Join-Path $compilerBin 'gcc.exe'), (Join-Path $compilerBin 'g++.exe'), (Join-Path $compilerBin 'windres.exe'), $npmCli, (Join-Path $npmShim 'npm.cmd'))) {
-    if (-not (Test-Path -LiteralPath $requiredFile)) { throw 'Build tools are missing. Run scripts/setup-build-tools.ps1 first.' }
-}
-$gccVersion = (& (Join-Path $compilerBin 'gcc.exe') -dumpfullversion).Trim()
-if ($LASTEXITCODE -ne 0 -or $gccVersion -ne $buildTools.compiler.gcc) { throw 'Compiler version differs from build-tools.json.' }
-$npmVersion = (& node.exe $npmCli --version).Trim()
-if ($LASTEXITCODE -ne 0 -or $npmVersion -ne $buildTools.npm) { throw 'Project npm version differs from build-tools.json.' }
-$rustCandidates = @($buildTools.rustToolchain, 'stable-x86_64-pc-windows-gnu')
-$selectedRust = $null
-foreach ($candidate in $rustCandidates) {
-    $rustCompiler = Join-Path $env:RUSTUP_HOME "toolchains\$candidate\bin\rustc.exe"
-    if (Test-Path -LiteralPath $rustCompiler) {
-        $rustVersion = (& $rustCompiler --version).Trim()
-        if ($LASTEXITCODE -eq 0 -and $rustVersion -match ('^rustc ' + [regex]::Escape($buildTools.rust) + ' ')) { $selectedRust = $candidate; break }
-    }
-}
-if (-not $selectedRust) { throw "Rust $($buildTools.rust) GNU is missing. Run scripts/install-rust.ps1." }
-$env:RUSTUP_TOOLCHAIN = $selectedRust
-$rustRuntime = Join-Path $env:RUSTUP_HOME "toolchains\$selectedRust\lib\rustlib\$($buildTools.rustTarget)\lib\self-contained"
-if (-not (Test-Path -LiteralPath (Join-Path $rustRuntime 'libgcc_eh.a'))) { throw 'Rust GNU runtime libraries are missing. Reinstall the pinned Rust toolchain.' }
-# w64devkit has no separate libgcc_eh; use the runtime shipped with this Rust version.
-$env:LIBRARY_PATH = $rustRuntime
-$env:PATH = "$npmShim;$(Join-Path $env:CARGO_HOME 'bin');$compilerBin;$env:PATH"
+if ($LASTEXITCODE -ne 0 -or [version]$actualNode -lt [version]'22.12.0') { throw 'Install a supported Node.js LTS version (22.12 or newer).' }
+$npmVersion = (& npm.cmd --version).Trim()
+if ($LASTEXITCODE -ne 0) { throw 'System npm is unavailable.' }
+# Use installed stable GNU. Updating is an explicit setup operation.
+if (-not (Get-Command rustup.exe -ErrorAction SilentlyContinue)) { throw 'Install shared Rust with scripts/install-rust.ps1 first.' }
+$installedToolchains = & rustup.exe toolchain list
+if ($LASTEXITCODE -ne 0 -or -not ($installedToolchains -match '^stable-x86_64-pc-windows-gnu(?:\s|$)')) { throw 'Install shared stable GNU Rust explicitly with scripts/install-rust.ps1.' }
+$env:RUSTUP_TOOLCHAIN = 'stable-x86_64-pc-windows-gnu'
+$rustVersion = (& rustc.exe --version).Trim()
+if ($LASTEXITCODE -ne 0) { throw 'Install shared Rust with scripts/install-rust.ps1 first.' }
 $env:CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER = Join-Path $compilerBin 'gcc.exe'
 $env:CC = Join-Path $compilerBin 'gcc.exe'
 $env:CXX = Join-Path $compilerBin 'g++.exe'
 $env:RC = Join-Path $compilerBin 'windres.exe'
 $env:CARGO_BUILD_JOBS = '4'
-Write-Host "Build environment: Node $actualNode / npm $npmVersion / Rust $($buildTools.rust) / GCC $gccVersion"
+$gccVersion = (& $env:CC -dumpfullversion).Trim()
+Write-Host "Shared environment: Node $actualNode / npm $npmVersion / $rustVersion / GCC $gccVersion"
+Write-Host "Cargo: $cargoHome; compiler: $compilerBin"

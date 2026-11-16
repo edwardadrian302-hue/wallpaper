@@ -1,17 +1,16 @@
 {
-  "node": "24.15.0",
-  "npm": "11.14.1",
-  "rust": "1.99.1",
-  "rustToolchain": "1.99.1-x86_64-pc-windows-gnu",
+  "policy": "shared-system-tools",
+  "node": "26.13.1",
+  "npm": "12.2.2",
+  "rust": "1.100.0",
+  "rustToolchain": "stable-x86_64-pc-windows-gnu",
   "rustTarget": "x86_64-pc-windows-gnu",
   "compiler": {
-    "name": "w64devkit",
-    "version": "2.5.0",
-    "gcc": "15.2.0",
-    "binutils": "2.45",
-    "directory": ".tools/w64devkit-2.5.0/w64devkit/bin",
-    "archive": "w64devkit-x64-2.5.0.7z.exe",
-    "url": "https://github.com/skeeto/w64devkit/releases/download/v2.5.0/w64devkit-x64-2.5.0.7z.exe",
-    "sha256": "7ac8f55befb93720f048f2c788704543fbc632c0164a8239ecbdefc9559481c5"
-  }
+    "name": "MSYS2 UCRT64",
+    "gcc": "16.2.0",
+    "packageVersion": "16.2.0-7",
+    "binutils": "2.47",
+    "discovery": "MSYS2_UCRT64_BIN or PATH"
+  },
+  "notes": "Versions record the validated environment. Setup uses current stable tools; normal builds never install or update global tools."
 }

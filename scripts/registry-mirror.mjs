@@ -4,7 +4,10 @@ import http from 'node:http';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 const port = 19420;
-const root = new URL('../.tools/registry-mirror/', import.meta.url);
+import { pathToFileURL } from 'node:url';
+import { join, sep } from 'node:path';
+import { homedir } from 'node:os';
+const root = pathToFileURL(join(process.env.CARGO_HOME || join(homedir(), '.cargo'), 'transport-cache') + sep);
 await mkdir(root, { recursive: true });
 const pending = new Map();
 async function upstream(url) {

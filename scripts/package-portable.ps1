@@ -1,7 +1,8 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param([string]$ReleaseDirectory)
+$ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $version = (Get-Content -LiteralPath (Join-Path $projectRoot 'package.json') -Raw -Encoding UTF8 | ConvertFrom-Json).version
-$releaseRoot = Join-Path $projectRoot "release\$version"
+$releaseRoot = if ($ReleaseDirectory) { [IO.Path]::GetFullPath($ReleaseDirectory) } else { Join-Path $projectRoot "release\$version" }
 $fileNames = @('Chaoxi.exe', 'WebView2Loader.dll', 'THIRD_PARTY_NOTICES.md', 'THIRD_PARTY_LICENSES.txt', '使用说明.txt')
 $files = @($fileNames | ForEach-Object { Join-Path $releaseRoot $_ })
 foreach ($file in $files) { if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Missing release file: $file" } }
