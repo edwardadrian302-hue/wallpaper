@@ -8,5 +8,5 @@ const root = document.getElementById('root')!;
 if (isDesktop()) {
   ReactDOM.createRoot(root).render(<React.StrictMode><App /></React.StrictMode>);
 } else {
-  root.textContent = '请打开青野壁纸桌面程序。';
+  root.textContent = '请打开潮汐壁纸桌面程序。';
 }

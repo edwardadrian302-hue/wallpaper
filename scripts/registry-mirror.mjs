@@ -14,7 +14,7 @@ async function upstream(url) {
   const task = (async () => {
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
-        const response = await fetch(url, { signal: AbortSignal.timeout(45000), headers: { 'User-Agent': 'Qingye-Cargo-Local-Transport/0.1' } });
+        const response = await fetch(url, { signal: AbortSignal.timeout(45000), headers: { 'User-Agent': 'Chaoxi-Cargo-Local-Transport/0.1' } });
         if (response.status === 404) { const error = new Error('not found'); error.status = 404; throw error; }
         if (!response.ok) throw new Error('Upstream HTTP ' + response.status);
         const bytes = Buffer.from(await response.arrayBuffer());
@@ -33,7 +33,7 @@ http.createServer(async (request, response) => {
   try {
     const path = new URL(request.url, 'http://127.0.0.1:' + port).pathname;
     if (path === '/config.json') { response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify({ dl: `http://127.0.0.1:${port}/crates/{crate}/{version}/download`, api: 'https://crates.io' })); return; }
-    if (path === '/health') { response.setHeader('Content-Type', 'text/plain; charset=utf-8'); response.end('qingye-cargo-transport'); return; }
+    if (path === '/health') { response.setHeader('Content-Type', 'text/plain; charset=utf-8'); response.end('chaoxi-cargo-transport'); return; }
     const crate = path.match(/^\/crates\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9.+_-]+)\/download$/);
     let url;
     if (crate) url = `https://static.crates.io/crates/${crate[1]}/${crate[1]}-${crate[2]}.crate`;

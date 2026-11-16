@@ -4,7 +4,7 @@ import * as SwitchPrimitive from '@radix-ui/react-switch';
 import { Check, ChevronDown, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-// Project-owned components, built on accessible Radix primitives and styled for Qingye.
+// Project-owned components, built on accessible Radix primitives and styled for Chaoxi.
 export function Dialog({ open, onOpenChange, title, description, children, className = '' }: { open: boolean; onOpenChange: (open: boolean) => void; title: string; description: string; children: ReactNode; className?: string }) {
   return <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
     <DialogPrimitive.Portal><DialogPrimitive.Overlay className="dialog-overlay" />

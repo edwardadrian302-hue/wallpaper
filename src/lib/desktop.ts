@@ -2,14 +2,14 @@ import { invoke, isTauri } from '@tauri-apps/api/core';
 import type { Wallpaper } from './model';
 export const isDesktop = () => isTauri();
 export async function applyWallpaper(wallpaper: Wallpaper, fit: 'fill' | 'fit') {
-  if (!isDesktop()) throw new Error('请通过青野壁纸桌面程序使用此功能');
+  if (!isDesktop()) throw new Error('请通过潮汐壁纸桌面程序使用此功能');
   const response = await fetch(wallpaper.src);
   if (!response.ok) throw new Error('无法读取图片');
   const bytes = await nativeImageBytes(await response.blob());
   return invoke<string>('set_wallpaper', { id: wallpaper.id, bytes, fit });
 }
 export async function openSource(url: string) {
-  if (!/^https:\/\/(commons\.wikimedia\.org|creativecommons\.org)\//.test(url)) return;
+  // Native code validates HTTPS, credentials, port and approved source domains.
   await invoke('open_source', { url });
 }
 export async function nativeImageBytes(blob: Blob): Promise<number[]> {

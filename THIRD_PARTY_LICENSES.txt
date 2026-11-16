@@ -1,4 +1,4 @@
-Qingye Wallpaper - Third-party software licenses
+Chaoxi Wallpaper - Third-party software licenses
 Includes development tools and all locally downloaded Rust dependencies conservatively.
 
 

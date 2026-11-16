@@ -3,15 +3,41 @@
 use std::{fs, path::PathBuf};
 use tauri::Manager;
 mod downloads;
+mod providers;
+mod search;
 use std::sync::Arc;
 
 #[tauri::command]
-fn get_download_state(app: tauri::AppHandle, service: tauri::State<Arc<downloads::Downloader>>, target: u32) -> Result<downloads::Snapshot, String> {
-    service.snapshot(&project_data_dir(&app)?, target)
+async fn delete_wallpapers(app: tauri::AppHandle, service: tauri::State<'_, Arc<downloads::Downloader>>, ids: Vec<String>) -> Result<downloads::DeleteResult, String> {
+    let root = project_data_dir(&app)?;
+    let service = Arc::clone(service.inner());
+    tauri::async_runtime::spawn_blocking(move || service.delete_wallpapers(&root, ids)).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn search_wallpapers(service: tauri::State<'_, Arc<search::SearchService>>, query: String, sources: Vec<providers::Source>, page: usize, restart: bool) -> Result<search::SearchPage, String> {
+    let service = Arc::clone(service.inner());
+    tauri::async_runtime::spawn_blocking(move || service.search(query, sources, page, restart)).await.map_err(|e| e.to_string())?
 }
 #[tauri::command]
-fn start_daily_downloads(app: tauri::AppHandle, service: tauri::State<Arc<downloads::Downloader>>, target: u32, exclude_ids: Vec<String>) -> Result<(), String> {
-    service.inner().start(project_data_dir(&app)?, target, exclude_ids)
+async fn download_search_wallpaper(app: tauri::AppHandle, search: tauri::State<'_, Arc<search::SearchService>>, service: tauri::State<'_, Arc<downloads::Downloader>>, id: String, exclude_ids: Vec<String>) -> Result<bool, String> {
+    let candidate = search.candidate(&id)?;
+    let root = project_data_dir(&app)?;
+    let service = Arc::clone(service.inner());
+    tauri::async_runtime::spawn_blocking(move || service.save_search_result(&root, candidate, exclude_ids)).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+fn get_download_state(app: tauri::AppHandle, service: tauri::State<Arc<downloads::Downloader>>, target: u32, sources: Vec<providers::Source>, download_types: Vec<String>) -> Result<downloads::Snapshot, String> {
+    service.snapshot(&project_data_dir(&app)?, target, downloads::selected_sources(sources.clone(), &download_types).unwrap_or_else(|_| providers::normalize(sources)))
+}
+#[tauri::command]
+fn start_daily_downloads(app: tauri::AppHandle, service: tauri::State<Arc<downloads::Downloader>>, target: u32, sources: Vec<providers::Source>, exclude_ids: Vec<String>, download_types: Vec<String>) -> Result<(), String> {
+    service.inner().start(project_data_dir(&app)?, target, sources, exclude_ids, false, download_types)
+}
+#[tauri::command]
+fn start_extra_downloads(app: tauri::AppHandle, service: tauri::State<Arc<downloads::Downloader>>, target: u32, sources: Vec<providers::Source>, exclude_ids: Vec<String>, download_types: Vec<String>) -> Result<(), String> {
+    service.inner().start(project_data_dir(&app)?, target, sources, exclude_ids, true, download_types)
 }
 #[tauri::command]
 fn cancel_daily_downloads(service: tauri::State<Arc<downloads::Downloader>>) { service.cancel(); }
@@ -90,7 +116,7 @@ fn set_windows_wallpaper(_: &std::path::Path, _: &str) -> Result<(), String> { E
 #[tauri::command]
 fn open_source(url: String) -> Result<(), String> {
     let parsed = url::Url::parse(&url).map_err(|e| e.to_string())?;
-    if parsed.scheme() != "https" || !matches!(parsed.host_str(), Some("commons.wikimedia.org" | "creativecommons.org")) || !parsed.username().is_empty() || parsed.password().is_some() { return Err("Source URL is not allowed".into()); }
+    if !providers::allowed_link(&parsed) { return Err("Source URL is not allowed".into()); }
     #[cfg(windows)]
     {
         use windows::{core::PCWSTR, Win32::{Foundation::HWND, UI::Shell::ShellExecuteW}};
@@ -103,10 +129,12 @@ fn open_source(url: String) -> Result<(), String> {
 }
 
 fn main() {
-    if std::env::args().nth(1).as_deref() == Some("--check-download") {
+    let diagnostic = std::env::args().nth(1);
+    if matches!(diagnostic.as_deref(), Some("--check-download" | "--check-extra-download")) {
         let root = std::env::args().nth(2).map(PathBuf::from).expect("Diagnostic output directory required");
         let target = std::env::args().nth(3).and_then(|v| v.parse().ok()).unwrap_or(1);
-        std::process::exit(if downloads::run_smoke(&root, target).is_ok() { 0 } else { 1 });
+        let sources = std::env::args().nth(4).map(|v| v.split(',').map(|s| match s { "wikimedia" => providers::Source::Wikimedia, "openverse" => providers::Source::Openverse, "nasa" => providers::Source::Nasa, _ => panic!("Unknown source") }).collect()).unwrap_or_else(|| vec![providers::Source::Wikimedia]);
+        std::process::exit(if downloads::run_smoke(&root, target, sources, diagnostic.as_deref() == Some("--check-extra-download")).is_ok() { 0 } else { 1 });
     }
     let mut context = tauri::generate_context!();
     if cfg!(debug_assertions) {
@@ -116,9 +144,10 @@ fn main() {
     }
     tauri::Builder::default()
         .manage(Arc::new(downloads::Downloader::default()))
-        .invoke_handler(tauri::generate_handler![set_wallpaper, export_wallpaper, open_source, get_download_state, start_daily_downloads, cancel_daily_downloads])
+        .manage(Arc::new(search::SearchService::default()))
+        .invoke_handler(tauri::generate_handler![delete_wallpapers, set_wallpaper, export_wallpaper, open_source, get_download_state, start_daily_downloads, start_extra_downloads, cancel_daily_downloads, search_wallpapers, download_search_wallpaper])
         .run(context)
-        .expect("Unable to start Qingye");
+        .expect("Unable to start Chaoxi");
 }
 
 #[cfg(test)]

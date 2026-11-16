@@ -1,19 +1,50 @@
-export type Category = '全部' | '山野' | '森林' | '海岸' | '湖泊' | '花卉' | '本地';
-export type Page = 'today' | 'library' | 'favorites' | 'settings';
+export type Category = '全部' | '山野' | '森林' | '海岸' | '湖泊' | '花卉' | '人物写真' | '宇宙' | '本地';
+export const IMAGE_SOURCES = [
+  { id: 'wikimedia', name: 'Wikimedia Commons' },
+  { id: 'openverse', name: 'Openverse' },
+  { id: 'nasa', name: 'NASA' },
+] as const;
+export type ImageSource = typeof IMAGE_SOURCES[number]['id'];
+export function validateSources(value: unknown): ImageSource[] {
+  const selected = IMAGE_SOURCES.filter(s => Array.isArray(value) && value.includes(s.id)).map(s => s.id);
+  return selected.length ? selected : ['wikimedia'];
+}
+export function sourceQuotas(total: number, sources: ImageSource[]) {
+  const selected = validateSources(sources);
+  return selected.map((id, index) => ({ id, target: Math.floor(total / selected.length) + (index < total % selected.length ? 1 : 0) }));
+}
+export function wallpaperSource(w: Wallpaper): string {
+  if (w.kind === 'import') return '本地导入';
+  return IMAGE_SOURCES.find(s => s.id === w.provider)?.name ?? (w.id.startsWith('openverse-') ? 'Openverse' : w.id.startsWith('nasa-') ? 'NASA' : 'Wikimedia Commons');
+}
+export const DOWNLOAD_TYPES = ['人物写真', '山野', '森林', '海岸', '湖泊', '花卉', '宇宙'] as const;
+export type DownloadType = typeof DOWNLOAD_TYPES[number];
+export function validateDownloadTypes(value: unknown): DownloadType[] {
+  const types = DOWNLOAD_TYPES.filter(t => Array.isArray(value) && value.includes(t));
+  return types.length ? types : [...DOWNLOAD_TYPES];
+}
+export function effectiveSources(sources: ImageSource[], types: DownloadType[]) {
+  return validateSources(sources).filter(s => s !== 'nasa' || types.includes('宇宙'));
+}
+export function downloadQuotas(total: number, sources: ImageSource[], types: DownloadType[]) {
+  const active = effectiveSources(sources, types);
+  return active.length ? sourceQuotas(total, active) : [];
+}
+export type Page = 'today' | 'library' | 'favorites' | 'settings' | 'online';
 export interface Wallpaper {
   id: string; title: string; category: string; src: string;
   width: number; height: number; originalWidth?: number; originalHeight?: number;
   author: string; license: string; licenseUrl?: string; source?: string;
-  originalTitle?: string; bytes: number; addedAt: string; kind: 'sample' | 'import' | 'download';
+  provider?: ImageSource; originalTitle?: string; bytes: number; addedAt: string; kind: 'sample' | 'import' | 'download';
 }
 export interface Preferences {
   rotation: boolean; interval: number; favoritesOnly: boolean; fit: 'fill' | 'fit';
-  dailyCount: number; reducedMotion: boolean; autoDownload: boolean;
+  dailyCount: number; reducedMotion: boolean; autoDownload: boolean; sources: ImageSource[]; downloadTypes: DownloadType[];
 }
 export const DEFAULT_PREFERENCES: Preferences = {
-  rotation: false, interval: 60, favoritesOnly: false, fit: 'fill', dailyCount: 24, reducedMotion: false, autoDownload: true,
+  rotation: false, interval: 60, favoritesOnly: false, fit: 'fill', dailyCount: 24, reducedMotion: false, autoDownload: true, sources: ['wikimedia'], downloadTypes: [...DOWNLOAD_TYPES],
 };
-export const CATEGORIES: Category[] = ['全部', '山野', '森林', '海岸', '湖泊', '花卉', '本地'];
+export const CATEGORIES: Category[] = ['全部', '山野', '森林', '海岸', '湖泊', '花卉', '人物写真', '宇宙', '本地'];
 export function dateKey(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
@@ -48,6 +79,8 @@ export function validatePreferences(value: unknown): Preferences {
     dailyCount: [12, 24, 48].includes(Number(p.dailyCount)) ? Number(p.dailyCount) : 24,
     reducedMotion: typeof p.reducedMotion === 'boolean' ? p.reducedMotion : false,
     autoDownload: typeof p.autoDownload === 'boolean' ? p.autoDownload : true,
+    sources: validateSources(p.sources),
+    downloadTypes: validateDownloadTypes(p.downloadTypes),
   };
 }
 export const LIBRARY_PAGE_SIZE = 12;

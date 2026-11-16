@@ -1,8 +1,41 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { CATEGORIES, validateSources, sourceQuotas, wallpaperSource } from '../src/lib/model.ts';
 import { DEFAULT_PREFERENCES, LIBRARY_PAGE_SIZE, dailySelection, dateKey, filterWallpapers, nextWallpaper, paginate, validatePreferences, type Wallpaper } from '../src/lib/model.ts';
 
 const images: Wallpaper[] = Array.from({ length: 16 }, (_, i) => ({ id: 'image-' + i, title: i === 0 ? '山间晨光' : '风景' + i, category: i % 2 ? '海岸' : '山野', src: '/image.jpg', width: 1920, height: 1080, author: i === 0 ? 'Example Artist' : '摄影师', license: 'CC0', bytes: 1024, addedAt: '2026-11-06', kind: i === 15 ? 'import' : 'sample' }));
+
+test('new downloaded themes can be filtered independently', () => {
+  const themes = ['人物写真'];
+  const rows = themes.map((category, i) => ({ ...images[0], id: `theme-${i}`, category }));
+  for (const theme of themes) {
+    assert.ok(CATEGORIES.includes(theme as typeof CATEGORIES[number]));
+    assert.deepEqual(filterWallpapers(rows, theme, '').map(w => w.category), [theme]);
+  }
+});
+
+test('source settings migrate old preferences, reject unknown sources and retain a default', () => {
+  assert.deepEqual(validatePreferences({}).sources, ['wikimedia']);
+  for (const value of [null, [], ['invalid'], 'nasa']) assert.deepEqual(validateSources(value), ['wikimedia']);
+  assert.deepEqual(validateSources(['nasa', 'openverse', 'nasa', 'invalid']), ['openverse', 'nasa']);
+  assert.deepEqual(validatePreferences({ sources: ['nasa'], autoDownload: false }).sources, ['nasa']);
+});
+test('selected sources share the total evenly in stable order', () => {
+  for (const total of [12, 24, 48]) {
+    assert.deepEqual(sourceQuotas(total, ['nasa', 'wikimedia', 'openverse']), [
+      { id: 'wikimedia', target: total / 3 }, { id: 'openverse', target: total / 3 }, { id: 'nasa', target: total / 3 },
+    ]);
+    assert.deepEqual(sourceQuotas(total, ['openverse', 'nasa']).map(q => q.target), [total / 2, total / 2]);
+    assert.deepEqual(sourceQuotas(total, ['nasa']), [{ id: 'nasa', target: total }]);
+  }
+  assert.deepEqual(sourceQuotas(25, ['nasa', 'wikimedia', 'openverse']).map(q => q.target), [9, 8, 8]);
+});
+test('source labels support legacy images, imported images and downloaded providers', () => {
+  assert.equal(wallpaperSource(images[0]), 'Wikimedia Commons');
+  assert.equal(wallpaperSource(images[15]), '本地导入');
+  assert.equal(wallpaperSource({ ...images[0], provider: 'openverse' }), 'Openverse');
+  assert.equal(wallpaperSource({ ...images[0], provider: 'nasa' }), 'NASA');
+});
 
 test('daily picks remain stable across restarts and catalog ordering, with no duplicates', () => {
   const expected = dailySelection(images, '2026-11-06', 6).map(w => w.id);
@@ -68,4 +101,15 @@ test('pagination handles the last partial page, empty searches and collection sh
   assert.deepEqual(paginate([], 3), { items: [], page: 1, totalPages: 1, start: 0, end: 0 });
   assert.equal(paginate(items, NaN).page, 1);
   assert.equal(paginate(items, -2).page, 1);
+});
+
+test('download types migrate, validate and allocate only compatible sources', async () => {
+  const { DOWNLOAD_TYPES, validateDownloadTypes, downloadQuotas } = await import('../src/lib/model.ts');
+  assert.deepEqual(validatePreferences({}).downloadTypes, [...DOWNLOAD_TYPES]);
+  assert.deepEqual(validateDownloadTypes(['花卉', '人物写真', '花卉', '游戏']), ['人物写真', '花卉']);
+  assert.deepEqual(validateDownloadTypes([]), [...DOWNLOAD_TYPES]);
+  assert.deepEqual(downloadQuotas(24, ['wikimedia', 'openverse', 'nasa'], ['人物写真']), [{ id: 'wikimedia', target: 12 }, { id: 'openverse', target: 12 }]);
+  assert.deepEqual(downloadQuotas(24, ['nasa'], ['人物写真']), []);
+  assert.deepEqual(downloadQuotas(24, ['nasa'], ['宇宙']), [{ id: 'nasa', target: 24 }]);
+  assert.deepEqual(validatePreferences({ downloadTypes: ['宇宙'] }).downloadTypes, ['宇宙']);
 });

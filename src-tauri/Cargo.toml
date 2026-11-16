@@ -1,7 +1,7 @@
 [package]
-name = "qingye-wallpaper"
-version = "0.1.2"
-description = "Qingye wallpaper desktop app"
+name = "chaoxi-wallpaper"
+version = "1.1.0"
+description = "Chaoxi wallpaper desktop app"
 edition = "2021"
 
 [build-dependencies]

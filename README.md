@@ -1,25 +1,37 @@
-# 青野壁纸
+# 潮汐壁纸
 
-Windows 10/11 x64 桌面壁纸软件，暂定名「青野」。React 用于绘制自定义界面，Tauri / Rust 提供独立窗口与 Windows 系统接口。发行版将界面和示例图片嵌入 EXE，使用时不需要 Node.js、浏览器或本地网页服务器。
+Windows 10/11 x64 桌面壁纸软件，项目名「潮汐」。React 用于绘制自定义界面，Tauri / Rust 提供独立窗口与 Windows 系统接口。发行版将界面和示例图片嵌入 EXE，使用时不需要 Node.js、浏览器或本地网页服务器。
+
+> 当前本地版本为 1.1.0，安装程序和便携包位于 `release/1.1.0/`。此版本尚未上传 GitHub Releases。
 
 ## 使用发行版
 
-从 [GitHub Releases](https://github.com/edwardadrian302-hue/wallpaper/releases/tag/v0.1.2) 下载：[Windows 安装版](https://github.com/edwardadrian302-hue/wallpaper/releases/download/v0.1.2/Qingye-0.1.2-x64-Setup.exe) · [完整便携版](https://github.com/edwardadrian302-hue/wallpaper/releases/download/v0.1.2/Qingye-0.1.2-x64-Portable.zip)。
 
-- `release/0.1.2/Qingye.exe`：便携版，双击启动。请放在可写的目录中，并保留同目录的 `WebView2Loader.dll`。
-- `release/0.1.2/Qingye-0.1.2-x64-Setup.exe`：中文安装程序，可选择安装目录并创建快捷方式。
-- `release/0.1.2/Qingye-0.1.2-x64-Portable.zip`：便携版完整压缩包，解压后运行 `Qingye.exe`。
+- `release/1.1.0/Chaoxi.exe`：便携版，双击启动。请放在可写的目录中，并保留同目录的 `WebView2Loader.dll`。
+- `release/1.1.0/Chaoxi-1.1.0-x64-Setup.exe`：中文安装程序，可选择安装目录并创建快捷方式。
+- `release/1.1.0/Chaoxi-1.1.0-x64-Portable.zip`：便携版完整压缩包，解压后运行 `Chaoxi.exe`。
 - Windows 需要 Microsoft Edge WebView2 运行环境；安装程序在缺少运行环境时会提示安装。便携版本也需要该运行环境。
 - 收藏、导入图片及 WebView 数据保存在 EXE 旁的 `data/`，导出图片位于 `data/exports/`，设为桌面的图片位于 `data/wallpapers/`。移动便携版时请一起移动 `data/`。
 - 请不要删除当前 Windows 桌面正在使用的图片文件。
 
-## 0.1.1 范围
+## 当前源码功能范围
+
+壁纸库与收藏页新增「管理壁纸库」：支持跨页多选、选择当前页、选择全部筛选结果、批量删除及确认提示。下载图片与导入副本实际删除（保留导入原文件、导出图片和当前桌面副本）；随包示例仅隐藏，可在偏好设置恢复。关联收藏同步清理，删除不会重置每日已下载量。下载或导入期间不可删除。
+
+偏好设置新增「下载类型」，支持人物写真、山野、森林、海岸、湖泊、花卉、宇宙，多选自动保存，用于每日自动及手动追加下载。NASA 仅在勾选宇宙时参与，否则均分给其他已选来源；仅启用 NASA 时需选宇宙。关键词在线搜索不受类型配置限制。
 
 已实现：今日精选、壁纸库、收藏、分类搜索、排序、图片预览、本地导入与内容去重、设置保存、Windows 桌面设置、应用运行期间的定时轮换、图片导出。
 
-随包提供 24 张有来源与许可信息的离线示例。真实每日下载已接入 Wikimedia Commons：默认每天 24 张，允许设置为 12/24/48 张；下载完自动加入图库。图库显示总数，每页 12 张。
+随包提供 24 张有来源与许可信息的离线示例。真实每日下载支持 Wikimedia Commons、Openverse 与 NASA：默认只勾选 Wikimedia，每天 24 张，可设为 12/24/48 张；在偏好设置中勾选多个来源后平均分配下载量。例如三源全选、每天 24 张时各下载 8 张。下载完自动加入图库，卡片与图片详情显示来源。图库显示总数，每页 12 张。
 
-每日任务在启动时及程序运行期间检查，重启后只补齐当天不足的部分。断网继续使用已有图片；限流按来源要求等待，失败时显示原因并稍后补齐。偏好设置可暂停自动下载。**托盘驻留、开机启动、多屏独立设置尚未实现**。关闭程序会停止下载和定时轮换，保留 Windows 当前壁纸。
+每日任务在启动时及程序运行期间检查，按来源记录当天完成数量，重启后只补齐不足的部分。来源设置自动保存，至少保留一个来源；旧设置自动沿用 Wikimedia。当天切换来源保留已下载图片并计入当天总量，完整平均分配从次日开始。单个来源失败或限流不会挤占其他来源配额，各自稍后重试。断网继续使用已有图片；限流按来源要求等待，失败时显示原因并稍后补齐。偏好设置可暂停自动下载。**托盘驻留、开机启动、多屏独立设置尚未实现**。关闭程序会停止下载和定时轮换，保留 Windows 当前壁纸。
+
+图库提供人物写真、山野、森林、海岸、湖泊、花卉、宇宙和本地分类。Wikimedia 和 Openverse 轮流搜索人物写真及自然风景；NASA 提供宇宙图片。分类依据搜索词，结果可能有偏差，横屏比例与授权筛选仍生效。
+
+侧栏「在线搜索」支持任意关键词，仅使用偏好设置中当前勾选的来源，每页最多 12 张，支持上一页、下一页、来源与许可查看。点击「下载到图库」后可收藏、预览和设为桌面；下载不占每日自动额度，且遵守现有去重与限流规则。预览图片在线加载，未下载的搜索结果不提供离线浏览。来源无结果或暂时不可用时显示提示，末页可能不足 12 张。
+
+点击「再下载」可按当前勾选来源追加一批新壁纸，默认每批 24 张（跟随数量设置）。手动追加单独计数，不占每日自动下载额度；多来源平均分配，按图片标识和内容哈希去重。下载期间追加按钮置灰，来源选项锁定，任务结束后可再次点击。暂停或关闭程序保留已入库图片，下一次点击开启新的批次；限流等待仍然生效。
+
 
 联网缓存位于 `data/library/images`，索引、每日计数、作者、来源、许可、内容哈希与搜索游标位于 `data/library/catalog.json`。请保留完整 data 目录。
 
@@ -100,8 +112,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-desktop.ps
 本版构建输出：
 
 ```text
-src-tauri/target/x86_64-pc-windows-gnu/release/qingye-wallpaper.exe
-src-tauri/target/x86_64-pc-windows-gnu/release/bundle/nsis/青野壁纸_0.1.2_x64-setup.exe
+src-tauri/target/x86_64-pc-windows-gnu/release/chaoxi-wallpaper.exe
+src-tauri/target/x86_64-pc-windows-gnu/release/bundle/nsis/潮汐壁纸_1.1.0_x64-setup.exe
 ```
 
 其他可选命令：
@@ -123,7 +135,7 @@ node.exe scripts/prepare-release.mjs
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/package-portable.ps1
 ```
 
-得到 `release/0.1.2/` 下的安装程序、完整便携 ZIP、SHA-256 校验文件与许可说明。便携版运行所需的 `WebView2Loader.dll` 会自动从锁定的 Rust 依赖中获取，不需要从别人的电脑复制。
+得到 `release/1.1.0/` 下的安装程序、完整便携 ZIP、SHA-256 校验文件与许可说明。便携版运行所需的 `WebView2Loader.dll` 会自动从锁定的 Rust 依赖中获取，不需要从别人的电脑复制。
 
 ### 开发调试
 
@@ -166,4 +178,6 @@ npm.cmd --version
 
 ## 发布状态
 
-此版本为开发预览版，未做代码签名。清理记录见 [0.1.2 验证记录](docs/VALIDATION-0.1.2.md)，下载与分页检查见 [0.1.1 验证记录](docs/VALIDATION-0.1.1.md)。安装升级、长期后台运行和多设备兼容性仍需继续验证。[其他来源调查](docs/IMAGE_SOURCES.md) 包含 NASA、Openverse 及开放馆藏的接入条件，尚未接入这些来源。
+当前版本 **1.1.0**，本地提供安装包和完整便携包，尚未发布到 GitHub Releases。功能与验收范围见 [1.1.0 说明](docs/releases/v1.1.0.md) 和 [验证记录](docs/VALIDATION.md)。
+
+升级时保留并复制 EXE 旁完整的 data 目录。收藏、偏好和导入图片在可读取原浏览器数据时迁移至当前存储名称；原数据保留。应用标识现为 com.chaoxi.wallpaper，未完成跨标识的安装升级验收，建议使用新的可写安装目录。

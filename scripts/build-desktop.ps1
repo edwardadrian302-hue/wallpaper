@@ -15,7 +15,7 @@ if ($LocalTransport) {
         try {
             $response = Invoke-WebRequest -Uri 'http://127.0.0.1:19420/health' -UseBasicParsing -TimeoutSec 2
             $content = if ($response.Content -is [byte[]]) { [Text.Encoding]::UTF8.GetString($response.Content) } else { [string]$response.Content }
-            return $content.Trim() -eq 'qingye-cargo-transport'
+            return $content.Trim() -eq 'chaoxi-cargo-transport'
         }
         catch { return $false }
     }
@@ -31,8 +31,8 @@ if ($LocalTransport) {
     if (Test-Path -LiteralPath $transportConfig) { $previousConfig = Get-Content -LiteralPath $transportConfig -Raw }
     @'
 [source.crates-io]
-replace-with = "qingye-local"
-[source.qingye-local]
+replace-with = "chaoxi-local"
+[source.chaoxi-local]
 registry = "sparse+http://127.0.0.1:19420/"
 '@ | Set-Content -LiteralPath $transportConfig -Encoding ASCII
 }
